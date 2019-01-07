@@ -54,5 +54,6 @@ class RegisterView(APIView):
         data=request.data #获取前端提交数据
         serializer=RegisterModelSerializers(data=data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         return Response(serializer.data)
