@@ -1,0 +1,2 @@
+celery_tasks异步处理：celery -A celery_tasks.main worker -l info
+front目录下执行：live-server开启web访问

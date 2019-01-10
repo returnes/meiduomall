@@ -3,7 +3,7 @@
 # author:caozy time:19-1-7
 from celery import Celery
 
-#进行Celery允许配置
+# 进行Celery允许配置
 # 为celery使用django配置文件进行设置
 import os
 if not os.getenv('DJANGO_SETTINGS_MODULE'):

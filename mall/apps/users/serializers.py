@@ -12,15 +12,18 @@ from django_redis import get_redis_connection
 class RegisterModelSerializers(serializers.ModelSerializer):
     '''注册序列化器定义'''
     # 数据库中不存在的字段定义校验
+    # write_only 只在反序列化的时候使用
+    # read_only 只在序列化的时候使用
     password2 = serializers.CharField(label='校验密码', allow_null=False, allow_blank=False, write_only=True)
     sms_code = serializers.CharField(label='验证码校验', max_length=6, min_length=6, allow_null=False, allow_blank=False,
                                      write_only=True)
     allow = serializers.CharField(label='是否同意协议', allow_null=False, allow_blank=False, write_only=True)
+    token=serializers.CharField(label='验证token',read_only=True)
 
     # 数据库中存在的字段校验
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'mobile', 'password2', 'sms_code', 'allow']
+        fields = ['id', 'token','username', 'password', 'mobile', 'password2', 'sms_code', 'allow']
         extra_kwargs = {
             'id': {'read_only': True},
             'username': {
@@ -72,4 +75,14 @@ class RegisterModelSerializers(serializers.ModelSerializer):
         user=super().create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
+
+        from rest_framework_jwt.settings import api_settings
+        jwt_payload_handler=api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler=api_settings.JWT_ENCODE_HANDLER
+        payload=jwt_payload_handler(user)
+        token=jwt_encode_handler(payload)
+        user.token=token
+
+
+
         return user

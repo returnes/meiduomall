@@ -27,8 +27,16 @@ SECRET_KEY = 'g_@n0syz8mas8p$9)_-clscb*06u3j4w=$fpi&2ewkimhfwn&3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# CORS
+CORS_ORIGIN_WHITELIST = (
+    '127.0.0.1:8080',
+    'localhost:8080',
+    'www.meiduo.site:8080'
+)
+CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
 
 #允许哪些主机访问
+# ALLOWED_HOSTS = ['*']
 ALLOWED_HOSTS = ['127.0.0.1','api.meiduo.site']
 
 # Application definition
@@ -58,13 +66,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-# CORS
-CORS_ORIGIN_WHITELIST = (
-    '127.0.0.1:8080',
-    'localhost:8080',
-    'www.meiduo.site:8080'
-)
-CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
 
 
 ROOT_URLCONF = 'mall.urls'
@@ -166,15 +167,39 @@ USE_TZ = False
 STATIC_URL = '/static/'
 # STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# 用户表继承django自带模型
-AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (  # 默认响应渲染类
         'rest_framework.renderers.JSONRenderer',  # json渲染器
         'rest_framework.renderers.BrowsableAPIRenderer',  # 浏览API渲染器
-    )
+    ),
+    # 异常处理#,异常处理通用文件配置
+    'EXCEPTION_HANDLER': 'utils.exceptions.exception_handler',
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+    ),
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ),
 }
+
+# 用户表继承django自带模型
+AUTH_USER_MODEL = 'users.User'
+import datetime
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),# 指明token有效期
+    'JWT_RESPONSE_PAYLOAD_HANDLER':'utils.users.jwt_response_payload_handler',
+
+}
+
+# 默认认证后端
+AUTHENTICATION_BACKENDS = [
+   'utils.users.UsernameMobileAuthBackend',
+]
 
 # 日志配置
 LOGGING = {
@@ -215,9 +240,4 @@ LOGGING = {
             'propagate': True,
         },
     }
-}
-# 异常处理通用文件配置
-REST_FRAMEWORK = {
-    # 异常处理
-    'EXCEPTION_HANDLER': 'utils.exceptions.exception_handler',
 }

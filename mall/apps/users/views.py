@@ -14,10 +14,6 @@ from django_redis import get_redis_connection
 from users.serializers import RegisterModelSerializers
 
 
-class LoginView(View):
-    def get(self):
-        return HttpResponse('hello')
-
 class RegisterUsernameCountView(APIView):
     '''
     注册用户名验证

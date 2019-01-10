@@ -203,7 +203,7 @@ var vm = new Vue({
 
             if (this.error_name == false && this.error_password == false && this.error_check_password == false
                 && this.error_phone == false && this.error_sms_code == false && this.error_allow == false) {
-                axios.post('http://127.0.0.1:8000' + '/users/', {
+                axios.post(this.host + '/users/', {
                     username: this.username,
                     password: this.password,
                     password2: this.password2,
@@ -215,10 +215,12 @@ var vm = new Vue({
                 })
                     .then(response => {
                         // 保存后端返回的token数据
+                        // 记录用户的登录状态
+                        sessionStorage.clear();
+                        localStorage.clear();
                         localStorage.token = response.data.token;
                         localStorage.username = response.data.username;
                         localStorage.user_id = response.data.id;
-
                         location.href = '/index.html';
                     })
                     .catch(error => {
