@@ -76,13 +76,13 @@ class RegisterModelSerializers(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
 
-        from rest_framework_jwt.settings import api_settings
-        jwt_payload_handler=api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler=api_settings.JWT_ENCODE_HANDLER
-        payload=jwt_payload_handler(user)
-        token=jwt_encode_handler(payload)
+        #实现jwt token
+        # from rest_framework_jwt.settings import api_settings
+        # jwt_payload_handler=api_settings.JWT_PAYLOAD_HANDLER
+        # jwt_encode_handler=api_settings.JWT_ENCODE_HANDLER
+        # payload=jwt_payload_handler(user)
+        # token=jwt_encode_handler(payload)
+        from utils.token_jwt import token_jwt
+        token=token_jwt(user)
         user.token=token
-
-
-
         return user
