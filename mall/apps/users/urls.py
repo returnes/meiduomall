@@ -10,6 +10,10 @@ urlpatterns = [
     url(r'^phones/(?P<mobile>[1][3,4,5,7,8][0-9]{9})/count/$',views.RegisterMobileCountView.as_view(),name='mobiles'),#手机号验证
     url(r'^$',views.RegisterView.as_view(),name='register'),#注册功能
     url(r'^auths/$', obtain_jwt_token,name='auths'),
+    url(r'^infos/$',views.UserCenterInfoView.as_view(),name='infos'),
+    url(r'^emails/$',views.UserEmailInfoView.as_view(),name='emails'),
+    url(r'^emails/verification/$',views.UserEmailVerifyView.as_view(),name='verify'),
+
 
 ]
 app_name='users'

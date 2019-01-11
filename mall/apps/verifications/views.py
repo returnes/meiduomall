@@ -53,6 +53,6 @@ class RegisterSMSCodeView(GenericAPIView):
 
         # result=CCP().send_template_sms(mobile, ['sms_code', 5], 1)
         from celery_tasks.sms.tasks import send_sms_code
-        send_sms_code(mobile,sms_code)
+        send_sms_code.delay(mobile,sms_code)
         return Response({'message':'ok'})
 

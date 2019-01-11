@@ -2,11 +2,16 @@
 # -*- coding: UTF-8 -*-
 # author:caozy time:19-1-7
 import re
-from rest_framework import serializers
+from rest_framework import serializers, status
 
 # from rest_framework.serializers import Serializer #适用于无模型序列化器
+from rest_framework.response import Response
+
+from mall import settings
 from users.models import User
 from django_redis import get_redis_connection
+
+from users.utils import generic_verify_url, check_token
 
 
 class RegisterModelSerializers(serializers.ModelSerializer):
@@ -86,3 +91,38 @@ class RegisterModelSerializers(serializers.ModelSerializer):
         token=token_jwt(user)
         user.token=token
         return user
+
+
+class UserCenterInfoModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=['id','username','mobile','email','email_active']
+
+class UserEmailInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=['id','email']
+        extra_kwargs={
+            'email':{'required':True}
+        }
+    def update(self, instance, validated_data):
+        email=validated_data['email']
+        instance.email=email
+        instance.save()
+        # from django.core.mail import send_mail
+
+
+        subject = '美多商场激活邮件'
+        message=''# 内容
+        from_email=settings.EMAIL_FROM
+        # recipient_list,   收件人列表
+        recipient_list = [email]
+
+        # user_id = 8
+        #对当前用户id进行加密
+        verify_url = generic_verify_url(instance.id)
+        # 邮件发送调用celery
+        from celery_tasks.email.tasks import send_celery_email
+        send_celery_email.delay(subject,message,from_email, email,verify_url,recipient_list)
+        return instance
+
