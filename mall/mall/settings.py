@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     # 'users.apps.UsersConfig',
     'corsheaders',#解决后端跨域问题
     'oauth.apps.OauthConfig',
-    'areas.apps.AreasCondig',
+    'areas.apps.AreasConfig',
 
 ]
 
