@@ -3,15 +3,17 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.views import View
-from rest_framework import status
+from rest_framework import status, mixins
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView,RetrieveAPIView,UpdateAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView
 
-from users.models import User
+from users.models import User, Address
 from django_redis import get_redis_connection
 
-from users.serializers import RegisterModelSerializers, UserCenterInfoModelSerializer, UserEmailInfoSerializer
+from users.serializers import RegisterModelSerializers, UserCenterInfoModelSerializer, UserEmailInfoSerializer, \
+    AddressSerializer, TitleSerializer
 from users.utils import check_token
 
 
@@ -20,28 +22,33 @@ class RegisterUsernameCountView(APIView):
     注册用户名验证
     http://127.0.0.1:8000/users/usernames/username/count/
     '''
-    def get(self,request,username):
-        #通过模型查询,获取用户名个数
+
+    def get(self, request, username):
+        # 通过模型查询,获取用户名个数
         count = User.objects.filter(username=username).count()
-        #组织数据
+        # 组织数据
         context = {
-            'count':count,
-            'username':username
+            'count': count,
+            'username': username
         }
         return Response(context)
+
 
 class RegisterMobileCountView(APIView):
     '''
     注册手机号验证
      http://127.0.0.1:8000/users/mobile/mobile/count/
     '''
-    def get(self,request,mobile):
-        count=User.objects.filter(mobile=mobile).count()
-        context={
-            'count':count,
-            'mobile':mobile
+
+    def get(self, request, mobile):
+        count = User.objects.filter(mobile=mobile).count()
+        context = {
+            'count': count,
+            'mobile': mobile
         }
         return Response(context)
+
+
 #
 # class RegisterView(APIView):
 #     '''
@@ -63,6 +70,7 @@ class RegisterView(CreateAPIView):
 
 from rest_framework.permissions import IsAuthenticated
 
+
 # 个人中心信息页 http://127.0.0.1:8080/user_center_info.html
 # 一级视图实现方法
 # class UserCenterInfoView(APIView):
@@ -83,11 +91,13 @@ class UserCenterInfoView(RetrieveAPIView):
     '''获取单个用户集，使用重写get_object方法'''
     permission_classes = [IsAuthenticated]
     serializer_class = UserCenterInfoModelSerializer
+
     def get_object(self):
         return self.request.user
 
-#邮箱认证：http://api.meiduo.site:8000/users/emails/
-#一级视图实现
+
+# 邮箱认证：http://api.meiduo.site:8000/users/emails/
+# 一级视图实现
 # class UserEmailInfoView(APIView):
 #     '''
 #     0.权限认证
@@ -104,7 +114,7 @@ class UserCenterInfoView(RetrieveAPIView):
 #         serializer.save()
 #         return Response(serializer.data)
 
-#三级视图实现
+# 三级视图实现
 
 class UserEmailInfoView(UpdateAPIView):
     '''
@@ -114,14 +124,15 @@ class UserEmailInfoView(UpdateAPIView):
     '''
     permission_classes = [IsAuthenticated]
     serializer_class = UserEmailInfoSerializer
+
     def get_object(self):
         return self.request.user
 
 
 # 接收邮箱验证信息
-#http://www.meiduo.site:8080/success_verify_email.html?token=
+# http://www.meiduo.site:8080/success_verify_email.html?token=
 
-#一级视图是实现
+# 一级视图是实现
 class UserEmailVerifyView(APIView):
     '''
     0.
@@ -130,43 +141,82 @@ class UserEmailVerifyView(APIView):
     3.数据库邮箱状态更改
     4.返回数据
     '''
+
     # permission_classes = [IsAuthenticated]
-    def get(self,request):
-        params=request.query_params
-        token=params.get('token')
+    def get(self, request):
+        params = request.query_params
+        token = params.get('token')
         if token is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        user_id=check_token(token)
+        user_id = check_token(token)
         if user_id is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        user=User.objects.get(id=user_id)
-        user.email_active=True
+        user = User.objects.get(id=user_id)
+        user.email_active = True
         user.save()
-        return Response({'msg':'ok'})
+        return Response({'msg': 'ok'})
 
 
+from rest_framework.viewsets import ModelViewSet
+
+# class AddressViewSet(mixins.ListModelMixin, mixins.CreateModelMixin):
+class AddressViewSet(ModelViewSet):
+    '''
+    收货信息保存视图
+    0.权限认证的用户才能调用
+    1.序列化器定义
+    2.查询集定义，只能查询表中未被逻辑删除的数据,重写方法
+    3.重写create（post）方法，限制用户保存地址条数
+    '''
+    permission_classes = [IsAuthenticated]
+    serializer_class = AddressSerializer
+
+    def get_queryset(self):
+        return self.request.user.addresses.filter(is_delete=False)
 
 
+    def create(self, request, *args, **kwargs):
+        '''地址创建'''
+        if self.request.user.addresses.count() >= 20:
+            return Response({'message': '保存数量达到上限'}, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(self.request,*args,**kwargs)
 
 
+    def list(self, request, *args, **kwargs):
+        """
+        获取用户地址列表
+        """
+        # 获取所有地址
+        queryset = self.get_queryset()
+        # 创建序列化器
+        serializer = self.get_serializer(queryset, many=True)
+        user = self.request.user
+        # 响应
+        return Response({
+            'user_id': user.id,
+            'default_address_id': user.default_address_id,
+            'limit': 20,
+            'addresses': serializer.data,
+        })
 
+    def destroy(self, request, *args, **kwargs):
+        '''地址删除'''
+        address=self.get_object()
+        address.is_delete=True
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @action(methods=['put'],detail=True)
+    def title(self,request,pk=None,address_id=None):
+        '''修改标题'''
+        address=self.get_object()
+        serializer=TitleSerializer(instance=address,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    @action(methods=['put'],detail=True)
+    def status(self,request,pk=None):
+        '''设置默认地址'''
+        address=self.get_object()
+        request.user.default_address=address
+        request.user.save()
+        return Response({'message':'ok'},status=status.HTTP_200_OK)

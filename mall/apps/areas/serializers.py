@@ -17,4 +17,4 @@ class AreaSubInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Area
-        fields = ['subs']
+        fields = ['subs','id','name']

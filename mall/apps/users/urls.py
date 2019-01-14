@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 # author:caozy time:19-1-6
 from django.conf.urls import url
+
 from . import views
 from rest_framework_jwt.views import obtain_jwt_token
 
@@ -13,7 +14,12 @@ urlpatterns = [
     url(r'^infos/$',views.UserCenterInfoView.as_view(),name='infos'),
     url(r'^emails/$',views.UserEmailInfoView.as_view(),name='emails'),
     url(r'^emails/verification/$',views.UserEmailVerifyView.as_view(),name='verify'),
-
-
 ]
-app_name='users'
+
+# app_name='users'
+from rest_framework.routers import DefaultRouter
+router=DefaultRouter()
+router.register(r'addresses',views.AddressViewSet,base_name='address')
+# router.register(r'addresses/title',views.AddressViewSet,base_name='title')
+
+urlpatterns+=router.urls
