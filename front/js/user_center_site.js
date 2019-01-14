@@ -263,8 +263,8 @@ var vm = new Vue({
         },
         // 取消保存地址
         cancel_title: function (index) {
-            // window.location.reload()
-            location.reload()
+            window.location.reload()
+            // location.reload()
         }
     }
 })
