@@ -54,7 +54,18 @@ INSTALLED_APPS = [
     'corsheaders',#解决后端跨域问题
     'oauth.apps.OauthConfig',
     'areas.apps.AreasConfig',
+    'goods.apps.GoodsConfig',
+    'contents.apps.ContentsConfig',
+    'ckeditor',  # 富文本编辑器
+    'ckeditor_uploader',  # 富文本编辑器上传图片模块
+    'django_crontab',  # 定时任务
 
+]
+
+# 定时任务
+CRONJOBS = [
+    # 每5分钟执行一次生成主页静态文件
+    ('*/1 * * * *', 'contents.crons.generate_static_index_html', '>> /home/noc/PycharmProjects/meiduomall/mall/logs/crontab.log')
 ]
 
 MIDDLEWARE = [
@@ -74,7 +85,7 @@ ROOT_URLCONF = 'mall.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -236,7 +247,33 @@ EMAIL_HOST_PASSWORD = '520000000'
 EMAIL_FROM = '美多商城<returnes@163.com>'
 
 
-# 日志配置
+# FastDFS
+FDFS_URL = 'http://192.168.150.145:8888/'  # 访问图片的路径域名 ip地址修改为自己机器的ip地址
+FDFS_CLIENT_CONF = os.path.join(BASE_DIR, 'utils/docker_fastdfs/client.conf')
+
+# django文件存储
+DEFAULT_FILE_STORAGE = 'utils.docker_fastdfs.storage_manage.FastDFSStorage'
+
+
+# 富文本编辑器ckeditor配置
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',  # 工具条功能
+        'height': 300,  # 编辑器高度
+        # 'width': 300,  # 编辑器宽
+    },
+}
+CKEDITOR_UPLOAD_PATH = ''  # 上传图片保存路径，使用了FastDFS，所以此处设为''
+
+# 生成的静态html文件保存目录
+GENERATED_STATIC_HTML_FILES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'front')
+
+
+
+# 解决crontab中文问题
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+# ===========================日志配置=============================
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
