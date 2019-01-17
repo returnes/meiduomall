@@ -7,13 +7,14 @@ from rest_framework import status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, ListAPIView
 
+from goods.models import SKU
 from users.models import User, Address
 from django_redis import get_redis_connection
 
 from users.serializers import RegisterModelSerializers, UserCenterInfoModelSerializer, UserEmailInfoSerializer, \
-    AddressSerializer, TitleSerializer
+    AddressSerializer, TitleSerializer, UserBrowsingHistorySerializer
 from users.utils import check_token
 
 
@@ -220,3 +221,24 @@ class AddressViewSet(ModelViewSet):
         request.user.default_address=address
         request.user.save()
         return Response({'message':'ok'},status=status.HTTP_200_OK)
+
+class UserBrowsingHistoryView(CreateAPIView,ListAPIView):
+    '''
+    历史记录存储，查询
+    此处历史记录存储到redis中
+    '''
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserBrowsingHistorySerializer
+
+
+
+    def list(self, request, *args, **kwargs):
+
+        user_id=request.user.id
+        redis_conn = get_redis_connection('history')
+        history_sku_ids=redis_conn.lrange('history_%s' % user_id, 0, -1)
+        skus = []
+        for sku_id in history_sku_ids:
+            sku = SKU.objects.get(pk=sku_id)
+            skus.append(sku)
+        return skus

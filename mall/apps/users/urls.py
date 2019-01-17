@@ -14,6 +14,8 @@ urlpatterns = [
     url(r'^infos/$',views.UserCenterInfoView.as_view(),name='infos'),
     url(r'^emails/$',views.UserEmailInfoView.as_view(),name='emails'),
     url(r'^emails/verification/$',views.UserEmailVerifyView.as_view(),name='verify'),
+    url(r'^browerhistories/$', views.UserBrowsingHistoryView.as_view(), name='history'),
+
 ]
 
 # app_name='users'

@@ -7,6 +7,7 @@ from rest_framework import serializers, status
 # from rest_framework.serializers import Serializer #适用于无模型序列化器
 from rest_framework.response import Response
 
+from goods.models import SKU
 from mall import settings
 from users.models import User, Address
 from django_redis import get_redis_connection
@@ -163,3 +164,31 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         model=Address
         fields=['title']
+
+
+class UserBrowsingHistorySerializer(serializers.Serializer):
+    '''添加用户浏览记录序列化器'''
+    sku_id=serializers.IntegerField(label='商品编号',min_value=1,required=True)
+
+    def validate_sku_id(self, value):
+        '''检测商品是否存在'''
+        try:
+            SKU.objects.get(pk=value)
+        except SKU.DoesNotExist:
+            raise serializers.ValidationError('商品不存在')
+
+        return value
+
+    def create(self, validated_data):
+        '''重写方法保存在redis中'''
+        # 获取用户信息
+        user_id=self.context['request'].user.id
+        sku_id=validated_data['sku_id']
+        redis_conn=get_redis_connection('history')
+        # 删除之前数据
+        redis_conn.lrem('history_%s'%user_id,0,sku_id)
+        # 写入当前数据
+        redis_conn.lpush('history_%s'%user_id,sku_id)
+        # 保存5条记录
+        redis_conn.ltrim('history_%s'%user_id,0,5)
+        return validated_data

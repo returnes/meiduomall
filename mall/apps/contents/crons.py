@@ -28,6 +28,8 @@ def generate_static_index_html():
     #
     #     }
     # }
+    '''
+    #此部分代码抽取到utils/goods.py
     # 初始化存储容器
     categories = OrderedDict()
     # 获取一级分类
@@ -61,6 +63,9 @@ def generate_static_index_html():
 
             # 组织数据
             categories[group_id]['sub_cats'].append(two)
+    '''
+    from utils.goods import get_categories
+    categories=get_categories()
 
     # 广告和首页数据
     contents = {}
