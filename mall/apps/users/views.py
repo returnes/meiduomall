@@ -14,7 +14,7 @@ from users.models import User, Address
 from django_redis import get_redis_connection
 
 from users.serializers import RegisterModelSerializers, UserCenterInfoModelSerializer, UserEmailInfoSerializer, \
-    AddressSerializer, TitleSerializer, UserBrowsingHistorySerializer
+    AddressSerializer, TitleSerializer, UserBrowsingHistorySerializer, UserBrowsingHistoryListSerializer
 from users.utils import check_token
 
 
@@ -230,15 +230,13 @@ class UserBrowsingHistoryView(CreateAPIView,ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserBrowsingHistorySerializer
 
-
-
-    def list(self, request, *args, **kwargs):
-
-        user_id=request.user.id
+    def get(self, request, *args, **kwargs):
+        user=request.user # 获取用户
         redis_conn = get_redis_connection('history')
-        history_sku_ids=redis_conn.lrange('history_%s' % user_id, 0, -1)
+        history_sku_ids=redis_conn.lrange('history_%s' % user.id, 0, -1) #redis中获取浏览历史
         skus = []
         for sku_id in history_sku_ids:
             sku = SKU.objects.get(pk=sku_id)
             skus.append(sku)
-        return skus
+        serializer=UserBrowsingHistoryListSerializer(skus,many=True)
+        return Response(serializer.data)

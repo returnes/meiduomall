@@ -192,3 +192,8 @@ class UserBrowsingHistorySerializer(serializers.Serializer):
         # 保存5条记录
         redis_conn.ltrim('history_%s'%user_id,0,5)
         return validated_data
+
+class UserBrowsingHistoryListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=SKU
+        fields = ('id', 'name', 'price', 'default_image_url', 'comments')
