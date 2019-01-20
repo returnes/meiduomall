@@ -31,13 +31,14 @@ DEBUG = True
 CORS_ORIGIN_WHITELIST = (
     '127.0.0.1:8080',
     'localhost:8080',
-    'www.meiduo.site:8080'
+    'www.meiduo.site:8080',
+    '192.168.150.145:8080'
 )
 CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
 
 #允许哪些主机访问
 # ALLOWED_HOSTS = ['*']
-ALLOWED_HOSTS = ['127.0.0.1','api.meiduo.site']
+ALLOWED_HOSTS = ['127.0.0.1','api.meiduo.site','192.168.150.1']
 
 # Application definition
 
@@ -61,12 +62,6 @@ INSTALLED_APPS = [
     'django_crontab',  # 定时任务
     'haystack',# 搜索引擎接口
 
-]
-
-# 定时任务
-CRONJOBS = [
-    # 每5分钟执行一次生成主页静态文件
-    ('*/5 * * * *', 'contents.crons.generate_static_index_html', '>> /home/noc/PycharmProjects/meiduomall/mall/logs/crontab.log')
 ]
 
 MIDDLEWARE = [
@@ -120,14 +115,16 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
+        "LOCATION": "redis://192.168.150.145:6379/0",
+        # "LOCATION": "redis://127.0.0.1:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "session": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": "redis://192.168.150.145:6379/1",
+        # "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -135,7 +132,8 @@ CACHES = {
     # 图形验证码
     "code": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/2",
+        "LOCATION": "redis://192.168.150.145:6379/2",
+        # "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -143,21 +141,23 @@ CACHES = {
     #存放省市区信息
     "areas": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/3",
+        "LOCATION": "redis://192.168.150.145:6379/3",
+        # "LOCATION": "redis://127.0.0.1:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "history": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/4",
+        "LOCATION": "redis://192.168.150.145:6379/4",
+        # "LOCATION": "redis://127.0.0.1:6379/4",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "cart": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/5",
+        "LOCATION": "redis://192.168.150.145:6379/5",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -252,7 +252,8 @@ AUTHENTICATION_BACKENDS = [
 # QQ登录参数
 QQ_CLIENT_ID = '101474184'
 QQ_CLIENT_SECRET = 'c6ce949e04e12ecc909ae6a8b09b637c'
-QQ_REDIRECT_URI = 'http://www.meiduo.site:8080/oauth_callback.html'
+# QQ_REDIRECT_URI = 'http://www.meiduo.site:8080/oauth_callback.html'
+QQ_REDIRECT_URI = 'http://192.168.150.145:8080/oauth_callback.html'
 
 #邮箱认证配置信息
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -285,7 +286,15 @@ CKEDITOR_CONFIGS = {
 CKEDITOR_UPLOAD_PATH = ''  # 上传图片保存路径，使用了FastDFS，所以此处设为''
 
 # 生成的静态html文件保存目录
-GENERATED_STATIC_HTML_FILES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'front')
+# GENERATED_STATIC_HTML_FILES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'front')
+GENERATED_STATIC_HTML_FILES_DIR = os.path.join('http://192.168.150.145:8080/home/noc/PycharmProjects/meiduomall/', 'front')
+
+
+# 定时任务
+CRONJOBS = [
+    # 每5分钟执行一次生成主页静态文件
+    ('*/5 * * * *', 'contents.crons.generate_static_index_html', '>> /home/noc/PycharmProjects/meiduomall/mall/logs/crontab.log')
+]
 
 # 解决crontab中文问题
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'

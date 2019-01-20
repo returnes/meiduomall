@@ -34,11 +34,22 @@ class CartSerializer(serializers.Serializer):
 
         return attrs
 
-class CartSKUSerializer(serializers.ModelSerializer):
 
+class CartSKUSerializer(serializers.ModelSerializer):
+    '''序列化器用于查询购物车商品'''
     count = serializers.IntegerField(label='数量')
     selected = serializers.BooleanField(label='是否勾选')
 
     class Meta:
         model = SKU
         fields = ('id', 'count', 'name', 'default_image_url', 'price', 'selected')
+
+class CartDeleteSerializer(serializers.Serializer):
+    '''购物车信息删除'''
+    sku_id=serializers.IntegerField(label='商品id',required=True)
+    def validated_sku_id(self,value):
+        try:
+            sku=SKU.objects.get(pk=value)
+        except SKU.DoesNotExist:
+            raise serializers.ValidationError('商品不存在')
+        return value

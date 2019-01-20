@@ -8,7 +8,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, ListAPIView
+from rest_framework_jwt.views import ObtainJSONWebToken
 
+from carts.utils import merge_cart_cookie_to_redis
 from goods.models import SKU
 from users.models import User, Address
 from django_redis import get_redis_connection
@@ -240,3 +242,18 @@ class UserBrowsingHistoryView(CreateAPIView,ListAPIView):
             skus.append(sku)
         serializer=UserBrowsingHistoryListSerializer(skus,many=True)
         return Response(serializer.data)
+
+class UserAuthorizationView(ObtainJSONWebToken):
+    '''
+    登录验证重写方法，实现登录时候合并购物车，cookie-》redis
+    '''
+    def post(self, request, *args, **kwargs):
+        '''重写post方法'''
+        response=super().post(request)
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.object.get('user') or request.user
+            response=merge_cart_cookie_to_redis(request,user,response)
+
+            return response

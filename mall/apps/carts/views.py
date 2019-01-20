@@ -3,13 +3,12 @@ from django.shortcuts import render
 
 # Create your views here.
 import base64
-from mutagen.id3 import USER
+
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from carts.serializers import CartSerializer,CartSKUSerializer
+from carts.serializers import CartSerializer, CartSKUSerializer, CartDeleteSerializer
 from django_redis import get_redis_connection
-
 from goods.models import SKU
 
 '''
@@ -23,6 +22,12 @@ class CartView(APIView):
     '''
     购物车使用redis方式存储，购物车添加实现用户登陆和用户未登陆，登陆情况下保存数据到redis，未登陆保存到cookie中
     重写用户在验证方法，取消验证
+    redis存储方式，hash、set
+        hash  user_id:{sku1_id:count,sku2_id:count}
+        set   selected:{sku1,sku2}
+    cookie存储方式加密字典
+        user_id:{sku1_id:{'count':count,'selected':selected},sku2{count:count,selected:selected}}
+
     '''
     def perform_authentication(self, request):
         pass
@@ -55,9 +60,6 @@ class CartView(APIView):
             if selected:
                 redis_conn.sadd('cart_selected_%s'%user.id,sku_id)
             return Response(serializer.data)
-
-
-
         else:
             '''cookie操作'''
 
@@ -127,3 +129,119 @@ class CartView(APIView):
         serializer = CartSKUSerializer(skus, many=True)
 
         return Response(serializer.data)
+
+    def put(self,request):
+        '''
+        更新购物车信息
+        1.接收前端数据，sku_id,count,selected
+        2.校验参数，和添加购物车相同
+        3.视图获取校验后的参数
+        4.判断是否是登录用户
+        5.登录用户操作redis
+            5.1.获取reids连接
+            5.2.获取redis中记录信息，并转换为字典
+            5.3.将数据count累加、selected写入字典
+            5.4.将字典数据写入redis
+        6.非登录用户操作cookie
+            6.1.获取前端cookie数据，判断cart是否存在
+            6.2.解码并可视化数据
+            6.3.将数据count累加，selected写入字典
+        7.返回数据
+        :param request:
+        :return:
+        '''
+        data=request.data
+        serializer=CartSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        sku_id=serializer.validated_data.get('sku_id')
+        count=serializer.validated_data.get('count')
+        selected=serializer.validated_data['selected']
+        # 获取user
+        try:
+            user=request.user
+        except Exception:
+            user=None
+
+        if user is not None and user.is_authenticated:
+            #redis操作
+            redis_conn=get_redis_connection('cart')
+            pl=redis_conn.pipeline()#统一提交redis，减少频繁操作reids
+            # 记录购物车商品数量
+
+            pl.hset('cart_%s' % user.id, sku_id, count)
+            if selected:
+                pl.sadd('cart_selected_%s'%user.id,sku_id)
+            else:
+                pl.srem('cart_selected_%s'%user.id,sku_id)
+            pl.execute()
+            return Response(serializer.data)
+
+        else:
+            # cookie操作
+            cart_str=request.COOKIES.get('cart')
+            if cart_str is not None:
+                cart_dict=pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                cart_dict={}
+
+            if sku_id in cart_dict:
+                cart_dict[sku_id]['count']=count
+                cart_dict[sku_id]['selected']=selected
+            #     origin_count = cart_dict[sku_id]['count']
+            #     count = origin_count
+            # cart_dict[sku_id] = {
+            #     'count':count,
+            #     'selected':selected
+            # }
+            response=Response(serializer.data)
+            cookie_cart=base64.b64encode(pickle.dumps(cart_dict)).decode()
+            response.set_cookie('cart',cookie_cart)
+            return response
+
+    def delete(self,request):
+        '''
+        1.接收前端商品id
+        2.校验数据
+        3.视图接收校验后的数据
+        4.判断用户登录状态
+        5.登录用户
+            5.1.链接redis
+            5.2.删除数据
+            5.3.返回数据
+        6.未登录用户
+            6.1.获取cookie
+            6.2.删除数据
+            6.3.判断cart是否存在
+            6.4.返回数据
+        :param request:
+        :return:
+        '''
+        serializer=CartDeleteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        sku_id=serializer.validated_data['sku_id']
+        try:
+            user=request.user
+        except Exception:
+            user=None
+        if user is not None and user.is_authenticated:
+            '''redis 中删除'''
+            redis_conn=get_redis_connection('cart')
+            pl=redis_conn.pipeline()
+            pl.hdel('cart_%s'%user.id,sku_id)
+            pl.srem('cart_selected_%s'%user.id,sku_id)
+            pl.execute()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        else:
+            '''cookie 中删除'''
+            cart_str=request.COOKIES.get('cart')
+            if cart_str is not None:
+                cart_dict=pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                cart_dict={}
+            response=Response(serializer.data)
+            if sku_id in cart_dict:
+                del cart_dict[sku_id]
+                cookie_str=base64.b64encode(pickle.dumps(cart_dict)).decode()
+                response.set_cookie('cart',cookie_str)
+            return response
