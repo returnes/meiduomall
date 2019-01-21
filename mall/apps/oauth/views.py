@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 # from QQLoginTool.QQtool import OAuthQQ
+from carts.utils import merge_cart_cookie_to_redis
 from oauth.serializers import QQAuthUserSerializer
 from oauth.utils import generic_open_id
 from . import utils
@@ -52,11 +53,13 @@ class QQAuthUserView(APIView):
             from utils.token_jwt import token_jwt
             token = token_jwt(qquser.user)
 
-            return Response({
+            response= Response({
                 'token':token,
                 'username':qquser.user.username,
                 'user_id':qquser.user.id
             })
+            response=merge_cart_cookie_to_redis(request,qquser.user,response)
+            return response
 
     def post(self,request):
         '''openid和帐号绑定'''
@@ -66,8 +69,10 @@ class QQAuthUserView(APIView):
         #token
         from utils.token_jwt import token_jwt
         token = token_jwt(qquser.user)
-        return Response({
+        response=Response({
             'token':token,
             "user_id":qquser.user.id,
             'username':qquser.user.username,
         })
+        response = merge_cart_cookie_to_redis(request, qquser.user, response)
+        return response

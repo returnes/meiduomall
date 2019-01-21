@@ -73,6 +73,7 @@
         <list>
           <option value="mall.settings" />
           <option value="areas.models.Area.objects" />
+          <option value="goods.models.SKU.objects" />
         </list>
       </option>
     </inspection_tool>
