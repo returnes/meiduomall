@@ -81,7 +81,7 @@ class OrderCommitSerializer(serializers.ModelSerializer):
                 redis_selected=redis_conn.smembers('cart_selected_%s'%user.id)
                 cart={}
                 for sku_id in redis_selected:
-                    cart[int(sku_id)]=int(redis_cart['sku_id'])
+                    cart[int(sku_id)]=int(redis_cart[sku_id])
                 sku_id_list=cart.keys()
                 skus=SKU.objects.filter(pk__in=sku_id_list)
                 for sku in skus:

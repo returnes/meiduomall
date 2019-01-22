@@ -109,7 +109,7 @@ DATABASES = {
         'PORT': 3306,  # 数据库端口
         'USER': 'meiduo',  # 数据库用户名
         'PASSWORD': 'meiduo',  # 数据库用户密码
-        'NAME': 'meiduomall'  # 数据库名字
+        'NAME': 'meiduo_mall'  # 数据库名字
     }
 }
 # redis 配置

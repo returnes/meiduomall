@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render
 
 # Create your views here.
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -44,7 +45,7 @@ class OrderSettlementView(APIView):
         return Response(serializer.data)
 
 
-class OrderView(APIView):
+class OrderView(CreateAPIView):
     '''订单提交视图'''
     permission_classes = [IsAuthenticated]
     serializer_class=OrderCommitSerializer
