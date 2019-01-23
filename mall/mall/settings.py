@@ -326,6 +326,12 @@ ALIPAY_DEBUG = True
 APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/keys/app_private_key.pem')
 ALIPAY_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/keys/alipay_public_key.pem')
 
+
+# 买家账号
+# 买家账号ptpdem0491@sandbox.com
+# 登录密码111111
+# 支付密码111111
+
 # ===========================日志配置=============================
 LOGGING = {
     'version': 1,
