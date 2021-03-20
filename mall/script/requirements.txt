@@ -32,7 +32,7 @@ idna==2.6
 itsdangerous==0.24
 itypes==1.1.0
 jdcal==1.4
-Jinja2==2.10
+Jinja2==2.11.3
 kombu==4.1.0
 MarkupSafe==1.0
 mutagen==1.40.0
